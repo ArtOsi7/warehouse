@@ -15,7 +15,7 @@ class RampManager
 
     public function getAllRamps()
     {
-        return $this->db->fetchAll("SELECT * FROM ramps ORDER BY priority");
+        return $this->db->fetchAll("SELECT * FROM ramp ORDER BY priority");
     }
 
     public function getAvailableRamps(string $weekDay, DateTimeInterface $reservationDate, DateTimeInterface $reservationEnd): array
@@ -23,7 +23,7 @@ class RampManager
         $ramps = $this->getAllRamps();
         $availableRamps = [];
         foreach ($ramps as $k => $ramp) {
-            $workTime = json_decode($ramp['worktime']);
+            $workTime = json_decode($ramp['worktime'], true);
 
             if (isset($workTime[$weekDay])) {
                 $workTimeStartObject = new DateTimeImmutable($reservationDate->format('Y-m-d') . ' ' . $workTime[$weekDay]['open']);
@@ -37,8 +37,8 @@ class RampManager
                 }
 
                 if ($reservationEnd <= $workTimeEndObject) { // if reservation ends before ramp closes add this ramp to available
-                    $ramp[$k]['worktime']['open'] = $workTimeStartObject; // uncomment this then change getAvailableTimesForRamp() function in ReservationsManager
-                    $ramp[$k]['worktime']['close'] = $workTimeEndObject;
+                    $ramp['worktime'] = ['open' => $workTimeStartObject, 'close' =>$workTimeEndObject]; // uncomment this then change getAvailableTimesForRamp() function in ReservationsManager
+                    //$ramp['worktime']['close'] = $workTimeEndObject;
 
                     $availableRamps[] = $ramp;
                 }

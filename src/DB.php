@@ -17,7 +17,7 @@ class DB
             $this->conn = new PDO($dsn, $dbParams['db_username'], $dbParams['db_password']);
             // Set the PDO error mode to exception
             $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            echo "Connection successful!";
+        //    echo "Connection successful!";
         } catch (PDOException $e) {
             echo "Connection failed: " . $e->getMessage();
         }
@@ -29,7 +29,7 @@ class DB
             $stmt->execute($params);
             return $stmt;
         } catch (PDOException $e) {
-            die("Query failed: " . $e->getMessage());
+            die("Query failed: " . $e->getMessage() . $e->getTraceAsString());
         }
     }
 
@@ -40,7 +40,7 @@ class DB
             $stmt->execute($params);
             return $stmt->fetchAll(PDO::FETCH_ASSOC); // Fetch all results as associative array
         } catch (PDOException $e) {
-            die("Query failed: " . $e->getMessage());
+            die("Query failed: " . $e->getMessage() .$e->getTraceAsString());
         }
     }
 

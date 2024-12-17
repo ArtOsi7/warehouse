@@ -17,14 +17,14 @@ class Api
         $this->reservationsManager = $reservationsManager;
     }
 
-    public function processRequest($requestData)
+    public function processRequest(string $requestData)
     {
        // $this->validateRequestData($requestData);
         if (!$this->isValidJson($requestData)) {
             $this->JsonResponse(['errors' => ['date is invalid json format']]);
         }
-
-        $this->reservationsManager->processData($requestData);
+        //print_r($requestData); exit;
+        $processedReservationsData = $this->reservationsManager->processData(json_decode($requestData, true));
 
         $this->JsonResponse(['OK' => 'Looks Ok Now']);
     }
