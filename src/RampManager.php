@@ -28,8 +28,7 @@ class RampManager
             if (isset($workTime[$weekDay])) {
                 $workTimeStartObject = new DateTimeImmutable($reservationDate->format('Y-m-d') . ' ' . $workTime[$weekDay]['open']);
                 $workTimeEndObject = new DateTimeImmutable($reservationDate->format('Y-m-d') . ' ' . $workTime[$weekDay]['close']);
-            //    $reservationFromHours = $reservationDate->format('H');
-            //    $reservationEndHours = $reservationEnd->format('H');
+
                 if ($reservationDate < $workTimeStartObject) { // if reservation_from time earlier then ramp open time re-assign reservation_from and to dates
                     $diff = $workTimeStartObject->diff($reservationDate);
                     $reservationDate = $reservationDate->add(new DateInterval('PT' . $diff->h . 'H' . $diff->i . 'M'));
@@ -38,7 +37,6 @@ class RampManager
 
                 if ($reservationEnd <= $workTimeEndObject) { // if reservation ends before ramp closes add this ramp to available
                     $ramp['worktime'] = ['open' => $workTimeStartObject, 'close' =>$workTimeEndObject]; // uncomment this then change getAvailableTimesForRamp() function in ReservationsManager
-                    //$ramp['worktime']['close'] = $workTimeEndObject;
 
                     $availableRamps[] = $ramp;
                 }
@@ -47,5 +45,17 @@ class RampManager
         }
 
         return $availableRamps;
+    }
+
+    /**
+     * @param int $rampId
+     * @param string $orderBy
+     * @return mixed
+     */
+    public function getRampReservations(int $rampId, string $orderBy = ReservationsManager::RESERVATION_FROM)
+    {
+        $sql = "SELECT * FROM reservations WHERE ramp_id = :ramp_id ORDER BY :order_by";
+
+        return $this->db->fetchAll($sql, ['ramp_id' => $rampId, 'order_by' => $orderBy]);
     }
 }
