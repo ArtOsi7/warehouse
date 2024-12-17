@@ -7,7 +7,8 @@ and array encoded to json (in case of single reservation
 
 Response example (Response could also have [failedReservations] element in case reservation data is valid but reservation cannot be made for other reason)
 
-```array
+```
+array
 (
     [successfulReservations] => Array
         (
@@ -51,4 +52,5 @@ Response example (Response could also have [failedReservations] element in case 
 
         )
 
-)```
+)
+```
