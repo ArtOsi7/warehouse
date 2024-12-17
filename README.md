@@ -54,3 +54,58 @@ array
 
 )
 ```
+
+another response example
+
+```
+{"successfulReservations":[{"ramp_name":"RampOne","ramp_code":"R1007","car_number":"ABC717","reservation_from":"2024-12-20 08:30","reservation_to":"2024-12-20 09:30"},{"ramp_name":"RampTwo","ramp_code":"R2007","car_number":"NON404","reservation_from":"2024-12-20 08:15","reservation_to":"2024-12-20 08:45"}],"failedReservations":{"2":{"errors":["No available ramps"],"reservation":{"reservation_from":"2024-12-20 16:30","car_number":"VON963","duration":60}}}}
+```
+
+```
+Array
+(
+    [successfulReservations] => Array
+        (
+            [0] => Array
+                (
+                    [ramp_name] => RampOne
+                    [ramp_code] => R1007
+                    [car_number] => ABC717
+                    [reservation_from] => 2024-12-20 08:30
+                    [reservation_to] => 2024-12-20 09:30
+                )
+
+            [1] => Array
+                (
+                    [ramp_name] => RampTwo
+                    [ramp_code] => R2007
+                    [car_number] => NON404
+                    [reservation_from] => 2024-12-20 08:15
+                    [reservation_to] => 2024-12-20 08:45
+                )
+
+        )
+
+    [failedReservations] => Array
+        (
+            [2] => Array
+                (
+                    [errors] => Array
+                        (
+                            [0] => No available ramps
+                        )
+
+                    [reservation] => Array
+                        (
+                            [reservation_from] => 2024-12-20 16:30
+                            [car_number] => VON963
+                            [duration] => 60
+                        )
+
+                )
+
+        )
+
+)
+
+```
