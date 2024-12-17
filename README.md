@@ -1,3 +1,5 @@
+Rename db_params.php.dist => db_params.php and add db params
+
 Service accepts array of arrays encoded to json (multiple reservations)
 ```[{"from":"2024-12-14 14:00","duration":60,"car_number":"ABC123"},{"from":"2024-12-13 17:00","duration":30,"car_number":"HAV178"},{"from":"2024-12-15 8:00","duration":60,"car_number":"ROP698"}]```
 
