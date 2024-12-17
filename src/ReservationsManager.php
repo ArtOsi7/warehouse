@@ -35,6 +35,7 @@ class ReservationsManager
     /**
      * ReservationsManager constructor.
      * @param $db
+     * @param $rampManager
      */
     public function __construct($db, $rampManager)
     {
@@ -42,7 +43,11 @@ class ReservationsManager
         $this->rampManager = $rampManager;
     }
 
-    public function processData(array $data)
+    /**
+     * @param array $data
+     * @return array
+     */
+    public function processData(array $data): array
     {
         $response = [];
         // if data array is not multidimensional make multidimensional
@@ -50,22 +55,11 @@ class ReservationsManager
             $data = [$data];
         }
 
-        //print_r($data); exit;
         $this->checkRequiredParams($data);
-
-        //print_r($this->invalidReservations);
-        //print_r($this->errors);
-        //print_r($this->failedReservations);
-        //print_r($this->successfulReservations);
-        //exit;
 
         if ($this->validReservations) {
             $this->processReservations();
         }
-        /*print_r($this->errors);
-        print_r($this->failedReservations);
-        print_r($this->successfulReservations);
-        exit;*/
 
         if ($this->successfulReservations) {
             $response['successfulReservations'] = $this->successfulReservations;
@@ -79,11 +73,12 @@ class ReservationsManager
             $response['invalidReservations'] = $this->invalidReservations;
         }
 
-        print_r($response); exit;
-
         return $response;
     }
 
+    /**
+     * @param array $requestData
+     */
     public function checkRequiredParams(array $requestData)
     {
         //print_r($requestData);exit;
@@ -140,26 +135,9 @@ class ReservationsManager
         return true;
     }
 
-    public function checkReservationDates(array $reservations, $format = 'Y-m-d H:i')
-    {
-        foreach ($reservations as $k => $reservation) {
-            $date = DateTime::createFromFormat($format, $reservation[self::RESERVATION_FROM]);
-            // check if date format is correct
-            if ($date === false) {
-                $this->errors['errors'][$k][] = ['Invalid reservation date format'];
-                $this->invalidReservations[$k] = $reservation;
-                unset($this->validReservations[$k]);
-                continue;
-            }
-            // check if date is not in the past
-            if (new DateTime() > $date) {
-                $this->errors['errors'][$k][] = ['Reservation date is in the past'];
-                $this->invalidReservations[$k] = $reservation;
-                unset($this->validReservations[$k]);
-            }
-        }
-    }
-
+    /**
+     * @throws Exception
+     */
     public function processReservations()
     {
         $reservations = $this->getValidReservations();
@@ -180,8 +158,8 @@ class ReservationsManager
                     $reservationFromDate = $reservationPeriod[0];
                     $reservationToDate = $reservationPeriod[1];
                     $reservationsInPeriod = $this->findRampReservationsInPeriod($rampId, $reservationFromDate->format('Y-m-d H:i'), $reservationToDate->format('Y-m-d H:i'));
+
                     // if not reservations in this period we can already make reservation
-                    //var_dump($reservationsInPeriod);
                     if (!$reservationsInPeriod) {
                         if ($this->makeReservation($reservationFromDate->format('Y-m-d H:i'), $reservationToDate->format('Y-m-d H:i'), $reservation[self::CAR_NUMBER], $rampId)) {
                             $this->successfulReservations[$k] = [
@@ -194,20 +172,16 @@ class ReservationsManager
                             $reservationSuccessful = true;
                             break;
                         }
-                    } /*else {
-                        // if there conflict find other times
-                        $last = end($reservationsInPeriod);
-                        $reservationDate = $last['reservation_to'];
-                    }*/
+                    }
 
                 }
+
                 if (!$reservationSuccessful) { // if no free time on any ramp for requested period find other free times
                     $closestAvailableTimes = [];
                     foreach ($availableRamps as $ramp) {
                         $closestAvailableTimes[] = $this->getClosestAvailableTimeForRamp($ramp, $reservationDate, $duration, $reservationEnd);
-                        //print_r($closestAvailableTimes);
                     }
-                    //print_r($closestAvailableTimes); exit;
+
                     $closestTime = array_reduce(array_filter($closestAvailableTimes), function($carry, $item) {
                         if ($carry === null || $item['from'] < $carry['from']) {
                             return $item;
@@ -245,6 +219,12 @@ class ReservationsManager
         }
     }
 
+    /**
+     * @param string $rampId
+     * @param string $reservationFrom
+     * @param string $reservationTo
+     * @return mixed
+     */
     public function findRampReservationsInPeriod(string $rampId, string $reservationFrom, string $reservationTo)
     {
         $sql = "SELECT * FROM reservations WHERE ((reservation_from <= :reservation_from && reservation_till >= :reservation_from)
@@ -279,7 +259,15 @@ class ReservationsManager
         return [$resFrom, $resTo];
     }
 
-    private function getClosestAvailableTimeForRamp(array $ramp, DateTimeInterface $reservationFrom, $reservationDuration, $reservationTo)
+    /**
+     * @param array $ramp
+     * @param DateTimeInterface $reservationFrom
+     * @param int $reservationDuration
+     * @param DateTimeInterface $reservationTo
+     * @return array|mixed
+     * @throws Exception
+     */
+    private function getClosestAvailableTimeForRamp(array $ramp, DateTimeInterface $reservationFrom, int $reservationDuration, DateTimeInterface $reservationTo)
     {
         $availableTimes = $this->getAvailableTimesForRamp($ramp);
 
@@ -287,19 +275,21 @@ class ReservationsManager
 
         $reservationDates = $this->getReservationDateAccordingRampWorkTime($ramp, $reservationFrom, $reservationTo);
         $reservationFromDate = $reservationDates[0];
-    //    print_r($availableTimes);
+
         foreach ($availableTimes as $period) {
-            //var_dump($period);
             if ($period['from'] >= $reservationFromDate->format('Y-m-d H:i') && $period['duration'] >= $reservationDuration) {
                 $closestPeriod = $period;
-                //@TODO: get difference between required reservation date and found free to determine which ramp closer free time
             }
         }
 
         return $closestPeriod;
     }
 
-    //@TODO: change function to get ramp work time from datetime object (set them in getAvailableRamps())
+    /**
+     * @param array $ramp
+     * @return array
+     * @throws Exception
+     */
     private function getAvailableTimesForRamp(array $ramp): array
     {
         $sql = "SELECT reservation_from, reservation_till, ramp_id FROM reservations WHERE ramp_id = :ramp_id ORDER BY reservation_from";
@@ -310,7 +300,7 @@ class ReservationsManager
         $rampCloses = $rampWorkTime[$dayOfWeek]['close'];*/
         $rampOpenFrom = $ramp['worktime']['open'];
         $rampCloses = $ramp['worktime']['close'];
-    //    var_dump($reservations);
+
         $availableTimes = [];
         /*foreach ($reservations as $reservation) {
             $availableTimes[] =
@@ -339,7 +329,7 @@ class ReservationsManager
                     $availableTimes[] = ['from' => $reservations[$i]['reservation_till'], 'to' => $reservations[$i+1]['reservation_from'], 'duration' => $duration, 'ramp' => $ramp];
                 }
             }
-        } else {
+        } else { // if there are no reservations available all time from ramp open time to ramp closing time
             $d1 = $rampOpenFrom;
             $d2 = $rampCloses;
             $diff = $d2->diff($d1);
@@ -351,6 +341,13 @@ class ReservationsManager
         return array_filter($availableTimes);
     }
 
+    /**
+     * @param $reservationFrom
+     * @param $reservationTill
+     * @param $carNumber
+     * @param $rampId
+     * @return mixed
+     */
     private function makeReservation($reservationFrom, $reservationTill, $carNumber, $rampId)
     {
         $sql = "INSERT INTO reservations (reservation_from, reservation_till, car_number, ramp_id) 
@@ -363,21 +360,6 @@ class ReservationsManager
             'car_number' => $carNumber,
             'ramp_id' => $rampId]
         );
-    }
-
-    public function getAvailableRamps($reservation)
-    {
-
-        $ramps = $this->rampManager->getAllRamps();
-
-        $date = new DateTime($reservation[self::RESERVATION_FROM]);
-        $duration = $reservation[self::RESERVATION_DURATION];
-        $reservationEnd = $date->add(new DateInterval('PT' . $duration . 'M'));
-        //$reservationEnd = $date->modify("+{$duration} minutes");
-        $reservationDay = $date->format('N');
-        foreach ($ramps as $ramp) {
-            $rampWorkDays = json_encode($ramp['worktime']);
-        }
     }
 
     /**
@@ -394,10 +376,5 @@ class ReservationsManager
     public function getInvalidReservations(): array
     {
         return $this->invalidReservations;
-    }
-
-    private function save()
-    {
-        //$this->db->save();
     }
 }

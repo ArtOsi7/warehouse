@@ -5,12 +5,19 @@ class DB
 {
     private $conn;
 
-    public function __construct($dbParams)
+    /**
+     * DB constructor.
+     * @param array $dbParams
+     */
+    public function __construct(array $dbParams)
     {
         $this->connect($dbParams);
     }
 
-    private function connect($dbParams)
+    /**
+     * @param array $dbParams
+     */
+    private function connect(array $dbParams)
     {
         $dsn = "mysql:host={$dbParams['db_host']};dbname={$dbParams['db_name']};charset=utf8";
         try {
@@ -23,6 +30,12 @@ class DB
         }
     }
 
+    /**
+     * @param $sql
+     * @param array $params
+     * @return mixed
+     * @TODO: change die() with better exceptions handling
+     */
     public function executeQuery($sql, $params = []) {
         try {
             $stmt = $this->conn->prepare($sql);
@@ -33,7 +46,12 @@ class DB
         }
     }
 
-    // Method to fetch all results from a SELECT query
+    /**
+     * @param $sql
+     * @param array $params
+     * @return mixed
+     * @TODO: change die() with better exceptions handling
+     */
     public function fetchAll($sql, $params = []) {
         try {
             $stmt = $this->conn->prepare($sql);
@@ -44,7 +62,12 @@ class DB
         }
     }
 
-    // Method to fetch a single row from a SELECT query
+    /**
+     * @param $sql
+     * @param array $params
+     * @return mixed
+     * @TODO: change die() with better exceptions handling
+     */
     public function fetchOne($sql, $params = []) {
         try {
             $stmt = $this->conn->prepare($sql);

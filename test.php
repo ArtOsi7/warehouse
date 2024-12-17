@@ -3,24 +3,20 @@ ini_set('display_startup_errors', 1);
 ini_set('display_errors', 1);
 error_reporting(-1);
 
-$d1 = new DateTime();
-$d2 = new DateTime();
-$d3 = new DateTime();
-
 $reservations = [
     [
-        'reservation_from' => $d1->modify('+45 minutes')->format('Y-m-d H:i'),
+        'reservation_from' => date('Y-m-d', strtotime(date('Y-m-d'). ' +1 day')) . ' 8:30',
         'car_number' => 'ABC717',
         'duration' => 60
     ],
     [
-        'reservation_from' => $d2->modify('+5 minutes')->format('Y-m-d H:i'),
-        'car_number' => 'ABC717',
+        'reservation_from' => date('Y-m-d', strtotime(date('Y-m-d'). ' +1 day')) . ' 8:15',
+        'car_number' => 'NON404',
         'duration' => 30
     ],
     [
-        'reservation_from' => $d3->modify('+15 minutes')->format('Y-m-d H:i'),
-        'car_number' => 'ABC717',
+        'reservation_from' => date('Y-m-d', strtotime(date('Y-m-d'). ' +1 day')) . ' 14:00',
+        'car_number' => 'VON963',
         'duration' => 60
     ]
 ];

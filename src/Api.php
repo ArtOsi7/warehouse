@@ -26,7 +26,7 @@ class Api
         //print_r($requestData); exit;
         $processedReservationsData = $this->reservationsManager->processData(json_decode($requestData, true));
 
-        $this->JsonResponse(['OK' => 'Looks Ok Now']);
+        $this->JsonResponse($processedReservationsData);
     }
 
     private function validateRequestData($data)
@@ -60,11 +60,6 @@ class Api
                 $this->errors[] = 'Date is in the past';
             }
         }
-    }
-
-    private function isDateNotInThePast(string $date)
-    {
-
     }
 
     /**
