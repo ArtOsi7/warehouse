@@ -58,7 +58,11 @@ class ReservationsManager
         $this->checkRequiredParams($data);
 
         if ($this->validReservations) {
-            $this->processReservations();
+            try {
+                $this->processReservations();
+            } catch (Exception $e) {
+                $response['errors'] = 'Error while processing reservations';
+            }
         }
 
         if ($this->successfulReservations) {
@@ -81,9 +85,6 @@ class ReservationsManager
      */
     public function checkRequiredParams(array $requestData)
     {
-        //print_r($requestData);exit;
-        //$reservations = [];
-        //$invalidReservations = [];
 
         foreach ($requestData as $k => $reservation) {
             $allArgumentsSet = 1;
@@ -92,12 +93,7 @@ class ReservationsManager
                 if (!isset($reservation[$param])) {
                     $this->errors['errors'][$k][] = 'Missing argument ' . $param;
                     $allArgumentsSet = 0;
-
                 }
-
-                /*if ($param === self::RESERVATION_FROM) {
-                    $this->isValidReservationDate($reservation[$param], $k);
-                }*/
             }
 
             //if all needed arguments present add reservation for further processing, otherwise add to invalid reservations
@@ -295,20 +291,15 @@ class ReservationsManager
         $sql = "SELECT reservation_from, reservation_till, ramp_id FROM reservations WHERE ramp_id = :ramp_id ORDER BY reservation_from";
 
         $reservations = $this->db->fetchAll($sql, ['ramp_id' => $ramp['id']]);
-        /*$rampWorkTime = json_decode($ramp['worktime']);
-        $rampOpenFrom = $rampWorkTime[$dayOfWeek]['open'];
-        $rampCloses = $rampWorkTime[$dayOfWeek]['close'];*/
+
         $rampOpenFrom = $ramp['worktime']['open'];
         $rampCloses = $ramp['worktime']['close'];
 
         $availableTimes = [];
-        /*foreach ($reservations as $reservation) {
-            $availableTimes[] =
-        }*/
+
         if (count($reservations)) {
             for ($i = 0; $i < count($reservations); $i++) {
                 if ($i == 0) { //for first reservation time between ramp opening time and reservation start time
-                    //$d1 = new DateTimeImmutable($rampOpenFrom);
                     $d1 = $rampOpenFrom;
                     $d2 = new DateTimeImmutable($reservations[$i]['reservation_from']);
                     $diff = $d2->diff($d1);
@@ -316,7 +307,6 @@ class ReservationsManager
                     $availableTimes[] = ['from' => $rampOpenFrom->format('Y-m-d H:i'), 'to' => $reservations[$i]['reservation_from'], 'duration' => $duration, 'ramp' => $ramp];
                 } elseif ($i == (count($reservations) - 1)) { // for last reservation between last reservation end time and ramp closing time
                     $d1 = new DateTimeImmutable($reservations[count($reservations) -1]['reservation_till']);
-                    //$d2 = new DateTimeImmutable($rampCloses);
                     $d2 = $rampCloses;
                     $diff = $d2->diff($d1);
                     $duration = ($diff->h * 60) + $diff->i; // calculate diff in minutes
@@ -337,18 +327,17 @@ class ReservationsManager
             $availableTimes[] = ['from' => $rampOpenFrom->format('Y-m-d H:i'), 'to' => $rampCloses->format('Y-m-d H:i'), 'duration' => $duration, 'ramp' => $ramp];
         }
 
-
         return array_filter($availableTimes);
     }
 
     /**
-     * @param $reservationFrom
-     * @param $reservationTill
-     * @param $carNumber
-     * @param $rampId
+     * @param string $reservationFrom
+     * @param string $reservationTill
+     * @param string $carNumber
+     * @param int $rampId
      * @return mixed
      */
-    private function makeReservation($reservationFrom, $reservationTill, $carNumber, $rampId)
+    private function makeReservation(string $reservationFrom, string $reservationTill, string $carNumber, int $rampId)
     {
         $sql = "INSERT INTO reservations (reservation_from, reservation_till, car_number, ramp_id) 
                     VALUES (:reservation_from, :reservation_till, :car_number, :ramp_id)";
